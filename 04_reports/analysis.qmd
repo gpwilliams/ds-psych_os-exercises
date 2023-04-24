@@ -6,10 +6,33 @@ editor: visual
 ---
 
 ```{r}
+#| echo: false
 #| message: false
 library(tidyverse)
+library(here)
 
+# set digits for reporting in the document when pulling values
+options(digits = 2)
+
+# read data
 dat <- read_csv(here("01_data", "02_cleaned", "cleaned_data.csv"))
+
+# this uses an anonymous function to round all numeric values
+# then makes a column to paste text with values for in-text reporting
+# note rounding has to happen in the data file for in-text reporting
+# when combining strings and values
+desc <- read_csv(here("03_analysis", "descriptives.csv")) |> 
+  mutate(
+    across(where(is.numeric), \(x) round(x, 2)),
+    in_text = paste0("*M* = ", feet_mean, ", *SD* = ", feet_sd)
+  )
+
+# read in the model
+mod <- read_csv(here("03_analysis", "wilcox_test.csv"))
+
+# set conditionals for in text reporting of p-values
+# if the p-value is below .001, it gets < .001, otherwise it gets = .
+p_val <- ifelse(mod$p.value < .001, "< .001", paste0("= ", mod$p.value))
 ```
 
 ## Method
@@ -17,6 +40,8 @@ dat <- read_csv(here("01_data", "02_cleaned", "cleaned_data.csv"))
 ### Participants
 
 ```{r}
+#| echo: false
+#| message: false
 n_participants <- length(unique(dat$session_id))
 demographics <- dat |> 
   group_by(sex) |> 
@@ -36,14 +61,13 @@ ages <- dat |>
 
 ## Results
 
-We
+We conducted a Wilcoxon signed-rank test for the estimated feet by condition, which showed larger lengths to be estimated in the large anchor condition (`r desc |> filter(condition == "large_anchor") |> pull(in_text)`) than the small anchor condition (`r desc |> filter(condition == "small_anchor") |> pull(in_text)`), *W* = `r mod$statistic`, *p* `r p_val`.
+
+Here's a plot in @fig-plot-conditions because we can.
 
 ```{r}
-# fit a two-sample t-test
-mod <- t.test(feet ~ condition, data = dat)
-
-# check assumptions
-qqnorm(dat$feet) # normality of residuals
-
-mod_nonpar <- wilcox.test(feet ~ condition, data = dat)
+#| label: fig-plot-conditions
+#| fig-cap: "a geet nice plot."
+#| echo: false
+knitr::include_graphics(here("02_plots", "condition_plot.png"))
 ```
