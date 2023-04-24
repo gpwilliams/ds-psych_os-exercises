@@ -1,0 +1,49 @@
+---
+title: "analysis"
+author: "Glenn Williams"
+format: html
+editor: visual
+---
+
+```{r}
+#| message: false
+library(tidyverse)
+
+dat <- read_csv(here("01_data", "02_cleaned", "cleaned_data.csv"))
+```
+
+## Method
+
+### Participants
+
+```{r}
+n_participants <- length(unique(dat$session_id))
+demographics <- dat |> 
+  group_by(sex) |> 
+  summarise(
+    n = n()
+  )
+ages <- dat |> 
+  summarise(
+    age_m = mean(age),
+    age_sd = sd(age),
+    age_min = min(age),
+    age_max = max(age)
+  )
+```
+
+`r n_participants` (`r demographics |> filter(sex == "female") |> pull(n)` female and `r demographics |> filter(sex == "male") |> pull(n)` male) participants (aged `r ages$min` - `r ages$max`, *M* = `r ages$age_m`, *SD* = `r ages$age_sd`) were recruited from the crowdsourcing website Prolific Academic and were reimbursed with £1,000,000.
+
+## Results
+
+We
+
+```{r}
+# fit a two-sample t-test
+mod <- t.test(feet ~ condition, data = dat)
+
+# check assumptions
+qqnorm(dat$feet) # normality of residuals
+
+mod_nonpar <- wilcox.test(feet ~ condition, data = dat)
+```
